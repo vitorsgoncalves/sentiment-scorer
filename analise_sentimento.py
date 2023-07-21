@@ -15,6 +15,7 @@ sia = SentimentIntensityAnalyzer()
 
 
 def analyze_sentiment(row, column, keywords=None):
+
     text = row[column].split('\n')
     
     if keywords is not None:
@@ -23,10 +24,9 @@ def analyze_sentiment(row, column, keywords=None):
         filtered_text = text
 
     if len(''.join(filtered_text).strip('\n').strip(' ')) == 0:
-        return 0
+        return None
     else:
-        tex = '\n'.join(filtered_text)
-        ss = sia.polarity_scores(tex)
+        ss = sia.polarity_scores('\n'.join(filtered_text))
         return ss["compound"]
 
 
@@ -35,7 +35,7 @@ def analyze_sentiment(row, column, keywords=None):
     language="english",
     program_description="Sentiment analysis using VADER",
     image_dir=".",
-    default_size=(610, 660),
+    default_size=(610, 660)
 )
 def main():
     parser = GooeyParser()
@@ -117,7 +117,11 @@ def main():
 
                     for row in file:
                         sentiment_score = analyze_sentiment(row, column, keywords)
-                        row.update({"vader": sentiment_score})
+
+                        if sentiment_score is None:
+                            continue
+
+                        row.update({"Sentiment score": sentiment_score})
 
                         if sentiment_score > 0.05:
                             positive_comments += 1
