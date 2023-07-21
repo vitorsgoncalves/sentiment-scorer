@@ -15,17 +15,31 @@ sia = SentimentIntensityAnalyzer()
 
 
 def analyze_sentiment(row, column, keywords=None):
+    """
+    Analyzes the sentiment of a given text in a row of the CSV file.
 
+    Args:
+        row (dict): The row from the CSV file as a dictionary.
+        column (str): The title of the column containing the text to be scored in the input file.
+        keywords (list, optional): Keywords to filter the input data (default is None).
+
+    Returns:
+        float or None: The sentiment score of the text or None if the filtered text is empty.
+    """
     text = row[column].split('\n')
-    
+
     if keywords is not None:
+        # Filter text based on keywords (if provided)
         filtered_text = [t for t in text if any(word in t.lower() for word in keywords)]
     else:
+        # If no keywords, use the entire text
         filtered_text = text
 
     if len(''.join(filtered_text).strip('\n').strip(' ')) == 0:
+        # If the filtered text is empty, return None
         return None
     else:
+        # Analyze sentiment of the filtered text using VADER
         ss = sia.polarity_scores('\n'.join(filtered_text))
         return ss["compound"]
 
@@ -106,6 +120,7 @@ def main():
             with open(os.path.join(input_path, files), "r") as path:
                 file = csv.DictReader(path)
 
+                # Variables for calculating the averages for each inout file
                 positive_comments = 0
                 negative_comments = 0
                 neutral_comments = 0
@@ -116,9 +131,11 @@ def main():
                     writer.writeheader()
 
                     for row in file:
+                        # Analyze sentiment score for each row and update the row with the score
                         sentiment_score = analyze_sentiment(row, column, keywords)
 
                         if sentiment_score is None:
+                            # If the sentiment score is None, skip the row and continue to the next one
                             continue
 
                         row.update({"Sentiment score": sentiment_score})
@@ -134,6 +151,7 @@ def main():
 
                         writer.writerow(row)
 
+                # Writes the file with the average values
                 average_score = sum / (neutral_comments + negative_comments + positive_comments) if (neutral_comments + negative_comments + positive_comments) else 0
                 averages.append({'filename': filename, 'positive_comments': positive_comments, 'neutral_comments': neutral_comments, 'negative_comments': negative_comments, 'average_score': average_score})
 
