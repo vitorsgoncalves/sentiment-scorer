@@ -2,41 +2,52 @@
 # -*- coding: utf-8 -*-
 
 import csv
-import datetime
 import os
-import re
-import sys
-
 from argparse import ArgumentParser
 from gooey import Gooey, GooeyParser
-
 import nltk
+
 nltk.download('vader_lexicon')
 
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
 sia = SentimentIntensityAnalyzer()
 
 
+def analyze_sentiment(row, column, keywords=None):
+    text = row[column].split('\n')
+    
+    if keywords is not None:
+        filtered_text = [t for t in text if any(word in t.lower() for word in keywords)]
+    else:
+        filtered_text = text
+
+    if len(''.join(filtered_text).strip('\n').strip(' ')) == 0:
+        return 0
+    else:
+        tex = '\n'.join(filtered_text)
+        ss = sia.polarity_scores(tex)
+        return ss["compound"]
+
 
 @Gooey(
-    program_name="Análise de sentimento",
-    language="portuguese",
-    program_description="Análise de sentimento utilizando a metodologia Vader",
+    program_name="Sentiment Scorer",
+    language="english",
+    program_description="Sentiment analysis using VADER",
     image_dir=".",
     default_size=(610, 660),
 )
 def main():
-    
     parser = GooeyParser()
-    
+
     required = parser.add_argument_group(
-        'Parâmetros',
+        'Parameters',
         gooey_options={
             'show_border': False,
             'columns': 2,
         }
     )
-    
+
     required2 = parser.add_argument_group(
         '',
         gooey_options={
@@ -44,116 +55,88 @@ def main():
             'columns': 1,
         }
     )
-            
+
     required.add_argument(
         "-i",
-        "--input", 
+        "--input",
         required=True,
-        metavar="Entrada",
-        help="Caminho onde se encontram os CSVs de entrada",
+        metavar="Input",
+        help="Input CSV file(s) directory path",
         widget="DirChooser"
     )
     required.add_argument(
         "-o",
         "--output",
         required=True,
-        metavar="Saída",
-        help="Caminho a serem gravados os CSVs resultantes",
-        widget="DirChooser"        
+        metavar="Output",
+        help="Output CSVs directory path",
+        widget="DirChooser"
     )
     required2.add_argument(
         "-c",
         "--column",
         required=True,
-        metavar="Nome da coluna",
-        help="Nome da coluna com o texto a ser analisado",
-    )    
+        metavar="Column name",
+        help="Title of the column containing the text to be scored in the input file",
+    )
     required2.add_argument(
         "-k",
         "--keywords",
         required=False,
-        metavar="Palavras-chave",
-        help="Palavras-chave a serem consideradas na seleção dos trechos (separadas por espaço)",
-    )    
-    
-    args = parser.parse_args()    
-      
-    caminho_entrada = args.input
-    caminho_saida = args.output
+        metavar="Keywords",
+        help="Keywords to be searched for, in case you want to filter the input data (separated by single space)",
+    )
+
+    args = parser.parse_args()
+
+    input_path = args.input
+    output_path = args.output
     if args.keywords is not None:
-        palavras = args.keywords.split(' ')
-    else: palavras = None
-    coluna = args.column
+        keywords = args.keywords.split(' ')
+    else:
+        keywords = None
+    column = args.column
 
-    
-    historico = []
+    averages = []
 
-    for files in os.listdir(caminho_entrada):
+    for files in os.listdir(input_path):
         if files.endswith(".csv"):
-            ano = files.replace(".csv","")
-            
-            caminho = open(caminho_entrada + "/" + files, "r")
-            arquivo = csv.DictReader(caminho)
-            
-            nbom = 0
-            nruim = 0
-            nneutro = 0
-            soma_sentimento = 0
-            
-            with open(caminho_saida + "/" + files[:-4] +'_sentimento.csv', 'w', encoding='UTF8', newline='') as f:
-                writer = csv.DictWriter(f, arquivo.fieldnames + ["vader"])
-                writer.writeheader()
-                
-                for row in arquivo:
-                    
-                    tex_original = row[coluna]
-                    
-                    a = tex_original.split('\n')
-                    
+            filename = files.replace(".csv", "")
 
-                    if palavras is not None:
-                    
-                        b = []
-                        for trecho in a:
-                            if any(palavra in trecho.lower() for palavra in palavras):
-                                b += [trecho]
-                    else:
-                        b = a
-                            
-                    
-                    if len(''.join(b).strip('\n').strip(' ')) == 0:
-                        continue
-                    else:
-                        tex = '\n'.join(b) 
+            with open(os.path.join(input_path, files), "r") as path:
+                file = csv.DictReader(path)
 
-                        ss = sia.polarity_scores(tex)
-                        valor_vader = ss["compound"]
-                        
-                        row.update({"vader": valor_vader})
+                positive_comments = 0
+                negative_comments = 0
+                neutral_comments = 0
+                sum = 0
 
-                        #print(valor_vader)
-                        if valor_vader > 0.05:
-                            nbom += 1
+                with open(os.path.join(output_path, files[:-4] + '_scored.csv'), 'w', encoding='UTF8', newline='') as f:
+                    writer = csv.DictWriter(f, file.fieldnames + ["Sentiment score"])
+                    writer.writeheader()
 
-                        elif valor_vader < -0.05:
-                            nruim += 1
-        
+                    for row in file:
+                        sentiment_score = analyze_sentiment(row, column, keywords)
+                        row.update({"vader": sentiment_score})
+
+                        if sentiment_score > 0.05:
+                            positive_comments += 1
+                        elif sentiment_score < -0.05:
+                            negative_comments += 1
                         else:
-                            nneutro += 1
+                            neutral_comments += 1
 
+                        sum += sentiment_score
 
-                        soma_sentimento += valor_vader
-                        
                         writer.writerow(row)
 
-            media = soma_sentimento / (nneutro+nruim+nbom) if (nneutro+nruim+nbom) else 0
-            historico.append({'ano': ano, 'nbom': nbom, 'nneutro': nneutro, 'nruim': nruim , 'media': media})
+                average_score = sum / (neutral_comments + negative_comments + positive_comments) if (neutral_comments + negative_comments + positive_comments) else 0
+                averages.append({'filename': filename, 'positive_comments': positive_comments, 'neutral_comments': neutral_comments, 'negative_comments': negative_comments, 'average_score': average_score})
 
-        
-    with open(caminho_saida + '/sentimento_mes.csv', 'w', encoding='UTF8', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=['ano','nbom', 'nneutro', 'nruim', 'media' ])
+    with open(os.path.join(output_path, 'average_scores.csv'), 'w', encoding='UTF8', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=['filename', 'positive_comments', 'neutral_comments', 'negative_comments', 'average_score'])
         writer.writeheader()
-        writer.writerows(historico)
+        writer.writerows(averages)
 
 
 if __name__ == "__main__":

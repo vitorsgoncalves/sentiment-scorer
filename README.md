@@ -1,19 +1,21 @@
-# Analisador de sentimento
+# Sentiment Scorer
 
-Este software foi criado como produto da dissertação de mestrado de título "Fatores influenciadores do sucesso em projetos de software livre: um estudo de caso da descontinuação do Firefox OS" e entregue como produto tecnológico para o programa de mestrado PROFNIT. Sua idealização se deu a partir dos procedimentos metodológicos realizados no estudo, como uma forma de facilitar a realização de análises de sentimento por novos pesquisadores, principalmente de áreas de estudo não tecnológicas, de forma a reduzir as barreiras de facilitar a viabilidade de novos estudos.
+This software aims at allowing researchers who aren't familiar with programming languages and environments, or aren't from techinical fields at all, to perform sentiment anaysis on textual data.
 
-Trata-se de uma ferramenta simplificada para realização de análise de sentimento a partir da metodologia [VADER](https://github.com/cjhutto/vaderSentiment) para analisar a intensidade de sentimento de grandes quantidades de texto. Esta ferramenta foi projetada para uso em aplicações científicas, quando a análise de sentimento pode ser útil para avaliar a opinião dos participantes em um estudo ou para analisar comentários de usuários em fóruns ou redes sociais. 
+Sentiment Scores is designed to be user-friendly and accessible for non-technical people who need to assign sentiment scores to textual data. In this regard, the software has a simplified interface, with as fewer buttons and inputs as possible, labeled and documented, and a one-click approach for processing the data. The file format used is the CSV, which most researchers are familiar with, and allows for pre and post-processing using spreadsheet tools. The results are written in a selected destination folder, preserving the format and structure of the input, but adding a score column with the calculated values,
 
-## Funcionalidades
+This project was created as a thecnical product in my thesis for the [PROFNIT](https://profnit.org.br/) master’s degree program. The original repository was archived, and can be accessed at (https://github.com/vitorsgoncalves/tcc-profnit). The published thesis can be accessed at: http://bd.centro.iff.edu.br/jspui/handle/123456789/4213
 
-- Importação de dados no formato CSV: O software permite a leitura de dados no formato CSV, devido à sua praticidade e popularidade em aplicações científicas. O usuário pode optar entre importar um único arquivo CSV ou vários arquivos CSV para análise.
-- Exportação de dados no formato CSV: O software exporta os dados analisados em um novo arquivo CSV, sem modificar o arquivo de origem, contendo a estrutura do arquivo original, adicionada de uma nova coluna, com o valor agregado de intensidade de sentimento calculada. É também exportado um arquivo CSV auxiliar, contendo uma linha para cada CSV de entrada e a intensidade média dos textos de cada um deles, para facilitar a obtenção de médias nos casos em que os dados são organizados em múltiplos CSVs separados por períodos de tempo 
-- Seleção da coluna a ser analisada: O usuário pode escolher qual coluna do CSV será analisada, de forma que o software analisará apenas o texto contido na coluna selecionada, ignorando as demais.
-- Filtragem por palavras-chave: O usuário pode escolher uma ou mais palavras-chave para filtrar os dados. Apenas as linhas que contêm pelo menos uma das palavras-chave selecionadas serão analisadas. Esta funcionalidade permite auxiliar a análise de dados com pouco ou nenhum pré-processamento.
+This tool uses the [VADER](https://github.com/cjhutto/vaderSentiment) methodology for scoring the sentiment in textual inputs. Thi method was chosen dued to its generally good results and low computational requirements.
 
-## Utilização
+## Features
 
-### Instalação
+ - Working with CSV data: The software works with data in CSV format, due to its practicality and popularity in scientific applications. The user can choose to either provide a single CSV file or several CSV ones for sentiment scoring.
+ - Exporting in CSV format: The software exports the sentiment score data to a new CSV file, without modifying the source, containing the structure of the original file, with a new column added, with the calculated score. An auxiliary CSV file is also exported, containing one line for each input CSV and the average intensity of the texts in each of them, to facilitate obtaining averages for cases when the data is organized into multiple CSVs separated by time periods.
+ - Selection of the column to be analyzed: The user can choose which column of the CSV will be analyzed so that the software will analyze only the text contained in the selected column, ignoring the others.
+ - Filtering by keywords: The user can choose one or more keywords to filter the data. Only lines that contain at least one of the selected keywords will be analyzed. This functionality helps to analyze data with little or no pre-processing.
+
+### Installing
 
 Se você utiliza sistemas operacionais Windows ou Linux em arquitetura X64, foram criados executáveis que podem ser baixados e executados diretamente, a partir do link abaixo, sem a necessidade de conhecimentos técnicos específicos:
 
@@ -43,7 +45,7 @@ Caso utilize um sistema diferente, ou o procedimento acima não funcione, siga a
 
 	`python analise_sentimento.py`
 
-### Execução
+### Usage
 
 Ao iniciar o software, será exibida uma tela como essa:
 
