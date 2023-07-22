@@ -6,8 +6,6 @@ import csv
 from sentiment_scorer.sentiment_scorer import analyze_sentiment
 from sentiment_scorer.sentiment_scorer import process_files
 
-# Define a path to a test directory containing sample CSV files
-TEST_DIRECTORY = tempfile.TemporaryDirectory()
 
 class SentimentScorerTest(unittest.TestCase):
 
@@ -52,13 +50,13 @@ class SentimentScorerTest(unittest.TestCase):
                 writer.writerow(["I'm feeling sad."])
                 writer.writerow(["I'm feeling neutral."])
 
+            # Tests the funcion without keywords
             process_files(input_dir,output_dir,"text")
 
             # Check if the output files were created
             output_file1 = os.path.join(output_dir, "test1_scored.csv")
             output_file2 = os.path.join(output_dir, "test2_scored.csv")
             output_file3 = os.path.join(output_dir, "average_scores.csv")
-
 
             self.assertTrue(os.path.exists(output_file1))
             self.assertTrue(os.path.exists(output_file2))
