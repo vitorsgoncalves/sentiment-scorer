@@ -34,6 +34,7 @@ def analyze_sentiment(row, column, keywords=None):
     else:
         # If no keywords, use the entire text
         filtered_text = text
+        
 
     if len(''.join(filtered_text).strip('\n').strip(' ')) == 0:
         # If the filtered text is empty, return None
@@ -44,6 +45,59 @@ def analyze_sentiment(row, column, keywords=None):
         return ss["compound"]
 
 
+def process_files(input_path, output_path, column, keywords=None):
+
+    averages = []
+
+    for files in os.listdir(input_path):
+        if files.endswith(".csv"):
+            filename = files.replace(".csv", "")
+
+            with open(os.path.join(input_path, files), "r") as path:
+                file = csv.DictReader(path)
+
+                # Variables for calculating the averages for each inout file
+                positive_comments = 0
+                negative_comments = 0
+                neutral_comments = 0
+                sum = 0
+
+                with open(os.path.join(output_path, files[:-4] + '_scored.csv'), 'w', encoding='UTF8', newline='') as f:
+                    writer = csv.DictWriter(f, file.fieldnames + ["Sentiment score"])
+                    writer.writeheader()
+
+                    for row in file:
+                        # Analyze sentiment score for each row and update the row with the score
+                        sentiment_score = analyze_sentiment(row, column, keywords)
+
+                        if sentiment_score is None:
+                            # If the sentiment score is None, skip the row and continue to the next one
+                            continue
+
+                        row.update({"Sentiment score": sentiment_score})
+
+                        if sentiment_score > 0.05:
+                            positive_comments += 1
+                        elif sentiment_score < -0.05:
+                            negative_comments += 1
+                        else:
+                            neutral_comments += 1
+
+                        sum += sentiment_score
+
+                        writer.writerow(row)
+
+                # Writes the file with the average values
+                average_score = sum / (neutral_comments + negative_comments + positive_comments) if (neutral_comments + negative_comments + positive_comments) else 0
+                averages.append({'filename': filename, 'positive_comments': positive_comments, 'neutral_comments': neutral_comments, 'negative_comments': negative_comments, 'average_score': average_score})
+
+    with open(os.path.join(output_path, 'average_scores.csv'), 'w', encoding='UTF8', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=['filename', 'positive_comments', 'neutral_comments', 'negative_comments', 'average_score'])
+        writer.writeheader()
+        writer.writerows(averages)
+
+
+
 @Gooey(
     program_name="Sentiment Scorer",
     language="english",
@@ -51,6 +105,8 @@ def analyze_sentiment(row, column, keywords=None):
     image_dir=".",
     default_size=(610, 660)
 )
+
+
 def main():
     parser = GooeyParser()
 
@@ -111,54 +167,8 @@ def main():
         keywords = None
     column = args.column
 
-    averages = []
 
-    for files in os.listdir(input_path):
-        if files.endswith(".csv"):
-            filename = files.replace(".csv", "")
-
-            with open(os.path.join(input_path, files), "r") as path:
-                file = csv.DictReader(path)
-
-                # Variables for calculating the averages for each inout file
-                positive_comments = 0
-                negative_comments = 0
-                neutral_comments = 0
-                sum = 0
-
-                with open(os.path.join(output_path, files[:-4] + '_scored.csv'), 'w', encoding='UTF8', newline='') as f:
-                    writer = csv.DictWriter(f, file.fieldnames + ["Sentiment score"])
-                    writer.writeheader()
-
-                    for row in file:
-                        # Analyze sentiment score for each row and update the row with the score
-                        sentiment_score = analyze_sentiment(row, column, keywords)
-
-                        if sentiment_score is None:
-                            # If the sentiment score is None, skip the row and continue to the next one
-                            continue
-
-                        row.update({"Sentiment score": sentiment_score})
-
-                        if sentiment_score > 0.05:
-                            positive_comments += 1
-                        elif sentiment_score < -0.05:
-                            negative_comments += 1
-                        else:
-                            neutral_comments += 1
-
-                        sum += sentiment_score
-
-                        writer.writerow(row)
-
-                # Writes the file with the average values
-                average_score = sum / (neutral_comments + negative_comments + positive_comments) if (neutral_comments + negative_comments + positive_comments) else 0
-                averages.append({'filename': filename, 'positive_comments': positive_comments, 'neutral_comments': neutral_comments, 'negative_comments': negative_comments, 'average_score': average_score})
-
-    with open(os.path.join(output_path, 'average_scores.csv'), 'w', encoding='UTF8', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=['filename', 'positive_comments', 'neutral_comments', 'negative_comments', 'average_score'])
-        writer.writeheader()
-        writer.writerows(averages)
+    process_files(input_path,output_path,column,keywords)
 
 
 if __name__ == "__main__":
